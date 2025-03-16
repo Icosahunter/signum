@@ -1,4 +1,3 @@
-palette red #000000 #ff0000
-template name base symbol emblem palette
-source ./
-icon test drawing1 drawing2 . red
+$palette red #000000 #ff0000
+$source ./
+test drawing1 insert(symbol drawing2) color(red) rotate(45)
