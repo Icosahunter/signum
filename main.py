@@ -2,16 +2,19 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from copy import deepcopy
 from itertools import chain
+import subprocess
+import shlex
 import re
 
 class Icon:
-    def __init__(self, src_filepath):
+    def __init__(self, src_filepath, section=None):
         self.src = src_filepath
         self.tree = ET.parse(self.src)
         self.root = self.tree.getroot()
         self.content = self.tree.findall('./{*}g')[0]
         viewbox = self.root.attrib['viewBox'].split()
         self.size = float(viewbox[2]), float(viewbox[3])
+        self.section = section
 
     def write(self, filepath):
         self.tree.write(filepath)
@@ -76,24 +79,25 @@ class Environment:
     def __init__(self, file):
         self.palettes = {}
         self.template = ['name', 'base', 'palette']
-        self.source = Path('./')
-        self.output = Path('./output')
+        self.source_dir = Path('./')
+        self.output_dir = Path('./output')
         self.config = Path(file)
+        self.export_cmd = 'inkscape --export-width={size} --export-filename={dest} --export-area-drawing {src}'
+        self.export_sizes = ['256']
+        self.export_format = '.png'
+        self.export_dir = Path('./dist')
         self.icons = {}
-        self.formats = ['.svg']
+        self.section = ''
         self.load_icons()
 
     def load_icons(self):
         self.icons.clear()
-        images = chain.from_iterable([self.source.glob(f'**/*{x}') for x in self.formats])
-        for file in images:
+        for file in self.source_dir.glob('**/*.svg'):
             self.icons[file.stem] = Icon(file)
-        print(self.icons)
 
     def do_inst(self, icon, inst):
         inst, args = inst.split('(')
         args = args[0:-1].split()
-        print(f'inst: {inst}     args: {args}')
         if inst == 'insert':
             icon.insert(args[0], self.icons[args[1]])
         elif inst == 'color':
@@ -108,35 +112,64 @@ class Environment:
         self.palettes[name] = colors
 
     def do_source(self, source_str):
-        self.source = Path(source_str.split()[1])
+        self.source_dir = Path(source_str.split()[1])
         self.load_icons()
 
     def do_output(self, output_str):
-        self.output = Path(output_str.split()[1])
+        self.output_dir = Path(output_str.split()[1])
+
+    def do_section(self, section_str):
+        self.section = section_str.split()[1]
+
+    def do_export(self, export_str):
+        split = export_str.split()
+        self.export_dir = Path(split[1])
+        self.export_format = split[2]
+        self.export_sizes = split[3:]
 
     def do_icon(self, icon_str):
         icon_def = re.findall(r"[\w\-\.]+(?:\([\w\-\.\t ]+\))?", icon_str)
         name = icon_def[0]
         base = icon_def[1]
         icon = deepcopy(self.icons[base])
+        icon.section = self.section
         for inst in icon_def[2:]:
             self.do_inst(icon, inst)
-        dest = (self.output / name).with_suffix('.svg')
+        dest = (self.output_dir / name).with_suffix('.svg')
         dest.parent.mkdir(exist_ok=True, parents=True)
-        icon.write(dest)
         self.icons[name] = icon
 
-    def run(self):
+    def evaluate(self):
         with open(self.config) as f:
             for line in f:
-                if line.startswith('$source'):
-                    self.do_source(line)
-                elif line.startswith('$output'):
-                    self.do_output(line)
-                elif line.startswith('$palette'):
-                    self.do_palette(line)
-                else:
-                    self.do_icon(line)
+                if not line.isspace():
+                    if line.startswith('$source'):
+                        self.do_source(line)
+                    elif line.startswith('$output'):
+                        self.do_output(line)
+                    elif line.startswith('$export'):
+                        self.do_export(line)
+                    elif line.startswith('$section'):
+                        self.do_section(line)
+                    elif line.startswith('$palette'):
+                        self.do_palette(line)
+                    else:
+                        self.do_icon(line)
 
-env = Environment('icons.txt')
-env.run()
+    def output(self):
+        for k, v in self.icons.items():
+            v.write((self.output_dir / k).with_suffix('.svg'))
+
+    def export(self):
+        for k, v in self.icons.items():
+            if v.section:
+                for size in self.export_sizes:
+                    dest = (self.export_dir / v.section / size / k).with_suffix(self.export_format)
+                    dest.parent.mkdir(exist_ok=True, parents=True)
+                    subprocess.run(shlex.split(self.export_cmd.format(size=size, src=v.src, dest=dest)))
+
+if __name__ == '__main__':
+    env = Environment('icons.txt')
+    env.evaluate()
+    env.output()
+    env.export()
