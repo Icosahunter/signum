@@ -1,0 +1,4 @@
+palette red #000000 #ff0000
+template name base symbol emblem palette
+source ./
+icon test drawing1 drawing2 . red
