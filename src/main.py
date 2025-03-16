@@ -5,6 +5,7 @@ from itertools import chain
 import subprocess
 import shlex
 import re
+import sys
 
 class Icon:
     def __init__(self, src_filepath, section=None):
@@ -169,7 +170,10 @@ class Environment:
                     subprocess.run(shlex.split(self.export_cmd.format(size=size, src=v.src, dest=dest)))
 
 if __name__ == '__main__':
-    env = Environment('icons.txt')
+    if len(sys.argv) > 1:
+        env = Environment(sys.argv[1])
+    else:
+        env = Environment('icons.txt')
     env.evaluate()
     env.output()
     env.export()
