@@ -6,6 +6,10 @@ import subprocess
 import shlex
 import re
 import sys
+from configparser import ConfigParser
+from toposort import toposort_flatten
+from tempfile import TemporaryDirectory
+import shutil
 
 class Icon:
     def __init__(self, src_filepath, section=None):
@@ -76,104 +80,107 @@ class Icon:
             w = (desired_size[1]/size[1])*size[0]
         return w, h
 
-class Environment:
-    def __init__(self, file):
-        self.palettes = {}
-        self.template = ['name', 'base', 'palette']
-        self.source_dir = Path('./')
-        self.output_dir = Path('./output')
-        self.config = Path(file)
-        self.export_cmd = 'inkscape --export-width={size} --export-filename={dest} --export-area-drawing {src}'
-        self.export_sizes = ['256']
-        self.export_format = '.png'
-        self.export_dir = Path('./dist')
-        self.icons = {}
-        self.section = ''
-        self.load_icons()
+class IconDef:
 
-    def load_icons(self):
-        self.icons.clear()
-        for file in self.source_dir.glob('**/*.svg'):
+    def __init__(self, icon_str, section):
+        icon_def = re.findall(r"[\w\-\.]+(?:\([\w\-\.\t ]+\))?", icon_str)
+        self.section = section
+        self.base = icon_def[0]
+        self.inst = []
+        for x in icon_def[1:]:
+            inst, args = x.split('(')
+            args = args[0:-1].split()
+            self.inst.append([inst, *args])
+        self.deps = set([x[2] for x in self.inst if x[0] == 'insert'])
+        self.deps.add(self.base)
+
+class Environment:
+    def __init__(self, file=None):
+        self.palettes = {}
+        self.icon_defs = {}
+        self.icons = {}
+        if file:
+            self.load(file)
+
+    def load(self, file):
+        parser = ConfigParser()
+        parser.read(file)
+        self.load_config(parser['__config__'])
+        self.load_source_files()
+        self.load_palettes(parser['__palettes__'])
+        self.load_icon_defs({x:parser[x] for x in parser.sections() if x not in ['__config__', '__palettes__']})
+
+    def load_config(self, config):
+        self.source = Path(config.get('source', './'))
+        self.output = config.get('output', './dist/{section}/{size}/{name}{format}')
+        self.output_sizes = [int(x) for x in config.get('output_sizes', '512').split()]
+        self.output_formats = config.get('output_format', ['.png'])
+        self.output_command = config.get('output_command', 'inkscape --export-width={size} --export-filename={dest} --export-area-drawing {src}')
+
+    def load_source_files(self):
+        for file in self.source.glob('**/*.svg'):
             self.icons[file.stem] = Icon(file)
 
-    def do_inst(self, icon, inst):
-        inst, args = inst.split('(')
-        args = args[0:-1].split()
-        if inst == 'insert':
-            icon.insert(args[0], self.icons[args[1]])
-        elif inst == 'color':
-            icon.color(self.palettes[args[0]])
-        elif inst == 'rotate':
-            icon.rotate(args[0])
+    def load_palettes(self, palettes):
+        for k, v in palettes.items():
+            colors = v.split()
+            self.palettes[k] = dict(zip(colors[::2], colors[1::2]))
 
-    def do_palette(self, palette_str):
-        colors = palette_str.split()[1:]
-        name = colors.pop(0)
-        colors = dict(zip(colors[::2], colors[1::2]))
-        self.palettes[name] = colors
+    def load_icon_defs(self, sections):
+        for section_name, section in sections.items():
+            for icon_name, icon in section.items():
+                self.icon_defs[icon_name] = IconDef(icon, section_name)
 
-    def do_source(self, source_str):
-        self.source_dir = Path(source_str.split()[1])
-        self.load_icons()
+    def build_icon(self, icon_def):
+        #if icon_def.base in self.icons:
+        base = deepcopy(self.icons[icon_def.base])
+        base.section = icon_def.section
+            #else:
+        #    icon_file = next(self.source.glob(f'**/{icon_def.base}.svg'))
+        #    base = Icon(icon_file, icon_def.section)
+        for inst in icon_def.inst:
+            if inst[0] == 'insert':
+                base.insert(inst[1], self.icons[inst[2]])
+            elif inst[0] == 'rotate':
+                base.rotate(inst[1])
+            elif inst[0] == 'color':
+                base.color(self.palettes[inst[1]])
+        return base
 
-    def do_output(self, output_str):
-        self.output_dir = Path(output_str.split()[1])
+    def build_icons(self):
+        deps_list = {k:v.deps for k, v in self.icon_defs.items()}
+        sorted_icons = toposort_flatten(deps_list)
+        sorted_icons = [x for x in sorted_icons if x not in self.icons]
+        for icon in sorted_icons:
+            self.icons[icon] = self.build_icon(self.icon_defs[icon])
 
-    def do_section(self, section_str):
-        self.section = section_str.split()[1]
+    def output_icons(self):
+        temp_dir = TemporaryDirectory()
+        temp_dir_path = Path(temp_dir.name)
 
-    def do_export(self, export_str):
-        split = export_str.split()
-        self.export_dir = Path(split[1])
-        self.export_format = split[2]
-        self.export_sizes = split[3:]
+        for name, icon in self.icons.items():
+            if icon.section != '__temporary__' and icon.section != None:
+                icon.write((temp_dir_path / name).with_suffix('.svg'))
+                for format in self.output_formats:
+                    if format == '.svg':
+                        src = (temp_dir_path / name).with_suffix('.svg')
+                        dest = self.output.format(section=icon.section, size='scalable', name=name, format=format)
+                        shutil.copy(src, dest)
+                    for size in self.output_sizes:
+                        src = (temp_dir_path / name).with_suffix('.svg')
+                        dest = Path(self.output.format(section=icon.section, size=size, name=name, format=format))
+                        dest.parent.mkdir(exist_ok=True, parents=True)
+                        cmd = self.output_command.format(size=size, src=src, dest=dest, format=format)
+                        print(cmd)
+                        subprocess.run(shlex.split(cmd))
 
-    def do_icon(self, icon_str):
-        icon_def = re.findall(r"[\w\-\.]+(?:\([\w\-\.\t ]+\))?", icon_str)
-        name = icon_def[0]
-        base = icon_def[1]
-        icon = deepcopy(self.icons[base])
-        icon.section = self.section
-        for inst in icon_def[2:]:
-            self.do_inst(icon, inst)
-        dest = (self.output_dir / name).with_suffix('.svg')
-        dest.parent.mkdir(exist_ok=True, parents=True)
-        self.icons[name] = icon
-
-    def evaluate(self):
-        with open(self.config) as f:
-            for line in f:
-                if not line.isspace():
-                    if line.startswith('$source'):
-                        self.do_source(line)
-                    elif line.startswith('$output'):
-                        self.do_output(line)
-                    elif line.startswith('$export'):
-                        self.do_export(line)
-                    elif line.startswith('$section'):
-                        self.do_section(line)
-                    elif line.startswith('$palette'):
-                        self.do_palette(line)
-                    else:
-                        self.do_icon(line)
-
-    def output(self):
-        for k, v in self.icons.items():
-            v.write((self.output_dir / k).with_suffix('.svg'))
-
-    def export(self):
-        for k, v in self.icons.items():
-            if v.section:
-                for size in self.export_sizes:
-                    dest = (self.export_dir / v.section / size / k).with_suffix(self.export_format)
-                    dest.parent.mkdir(exist_ok=True, parents=True)
-                    subprocess.run(shlex.split(self.export_cmd.format(size=size, src=v.src, dest=dest)))
+    def run(self):
+        self.build_icons()
+        self.output_icons()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         env = Environment(sys.argv[1])
     else:
         env = Environment('icons.txt')
-    env.evaluate()
-    env.output()
-    env.export()
+    env.run()

@@ -1,6 +1,11 @@
-$palette red #000000 #ff0000
-$source ./
-$export ./dist .png 48 64 128
+[__config__]
+source = ./src
+output = ./dist/{section}/{size}/{name}{format}
+output_sizes = 48 64 128
+output_formats = .png .svg
 
-$section test_section
-test drawing1 insert(symbol drawing2) color(red) rotate(45)
+[__palettes__]
+red = #000000 #ff0000
+
+[test_section]
+test = drawing1 insert(symbol drawing2) color(red) rotate(45)
