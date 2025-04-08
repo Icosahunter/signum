@@ -19,18 +19,36 @@ To try out Signum:
 ## Icon Def Files
 
 You tell Signum how to make your icons using an icon definition file.
-This file is a simple text file where each line is an instruction.
-If a line begins with a `$` it is a "directive", otherwise the line is an icon definition.
+This file is an INI style config file.
+There are a few sections for setting things up (`__config__` and `__palettes__`) and then all other sections are for your icon definitions.
 
-Directives are used to configure Signum, valid directives are:
- - `$source <sourc_dir>` : Sets the directory to look for source icons in.
- - `$output <output_dir>` : Sets the directory to save output icons to.
- - `$export <export_dir> <export_format> <size> [size]...` : Configures the export directory, format (file extension, including `.`), and sizes (one or more sizes in pixels)
- - `$section <secion_name>` : Signifies the start of a section. Sections become subdirectories when exporting icons.
- - `$palette <color1> <color2> [color1 color2]...` : A palette converts colors. Every 2 colors is a pair, where the first color is mapped to the second. Use hex format starting with `#`.
+The `__config__` section can have the following options:
+- `source` : Directory path containing all your source SVG files.
+- `output` : Directory path to output the built icons to.
+- `output_sizes` : Space separated list of numbers. These are the different widths to export the images at.
+- `output_formats` : Space separated of file extensions for output files, must include the `.` (Example: `.png`)
+- `output_command` : Shell command for outputting the files. By default Signum uses inkscape for exporting. The command should be a Python format string which can make use of the following values: `size`, `src`, `dest`, `format`.
 
-Icon definitions are of the format `<name> <base_icon> [instruction(args)]...`
-Instructions manipulate the icon, valid instructions are:
- - `insert(<id>, <icon>)` : Inserts the icon by the name of `<icon>` at position of the rectangle with id of `<id>`.
- - `color(<palette>)` : Applies the palette by the name of `<palette>` to the icon.
- - `rotate(<deg>)` : Rotates the icon about it's center by `<deg>` degrees.
+For instance, here is the default config values for Signum:
+
+```
+[__config__]
+source = ./
+output = ./dist/{section}/{size}/{name}{format}
+output_sizes = 512
+output_formats = .png
+output_command = inkscape --export-width={size} --export-filename={dest} --export-area-drawing {src}
+```
+
+The `__palettes__` section contains palette definitions.
+The keys are the palette names, and the values are space separated lists of hex color values, where the odd colors get replaced with the even colors.
+For instance:
+
+```
+[__palettes__]
+red = #333 #300 #777 #700 #bbb #b00 #fff #f00
+green = #333 #030 #777 #070 #bbb #0b0 #fff #0f0
+blue = #333 #003 #777 #007 #bbb #00b #fff #00f
+```
+
+This defines 3 palettes named 'red', 'green', and 'blue', which turn various shades of gray into various shades of red, green, and blue respectively.

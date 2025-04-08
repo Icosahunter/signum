@@ -114,7 +114,7 @@ class Environment:
         self.source = Path(config.get('source', './'))
         self.output = config.get('output', './dist/{section}/{size}/{name}{format}')
         self.output_sizes = [int(x) for x in config.get('output_sizes', '512').split()]
-        self.output_formats = config.get('output_format', ['.png'])
+        self.output_formats = config.get('output_formats', ['.png'])
         self.output_command = config.get('output_command', 'inkscape --export-width={size} --export-filename={dest} --export-area-drawing {src}')
 
     def load_source_files(self):
@@ -171,7 +171,6 @@ class Environment:
                         dest = Path(self.output.format(section=icon.section, size=size, name=name, format=format))
                         dest.parent.mkdir(exist_ok=True, parents=True)
                         cmd = self.output_command.format(size=size, src=src, dest=dest, format=format)
-                        print(cmd)
                         subprocess.run(shlex.split(cmd))
 
     def run(self):
