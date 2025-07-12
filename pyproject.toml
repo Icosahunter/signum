@@ -1,0 +1,15 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project]
+name = 'signum'
+version = '0.0.1'
+description = 'A simple but powerful vector icon generation tool.'
+dynamic = ["dependencies"]
+
+[project.scripts]
+signum = 'signum:main.run'

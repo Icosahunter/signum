@@ -3,6 +3,7 @@ source = ./src
 output = ./dist/{section}/{size}/{name}{format}
 output_sizes = 48 64 128
 output_formats = .png .svg
+scale_stroke_width = false
 
 [__palettes__]
 red = #000000 #ff0000

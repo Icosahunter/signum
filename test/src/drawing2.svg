@@ -38,20 +38,13 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <rect
-       style="font-variation-settings:'wght' 700;fill:#000000;stroke-width:10.3609;stroke-linejoin:round;paint-order:markers fill stroke;fill-opacity:1"
-       id="rect1"
-       width="16.933332"
-       height="135.46666"
-       x="59.266666"
-       y="3.5603841e-06" />
-    <rect
-       style="font-variation-settings:'wght' 700;fill:#000000;stroke-width:10.3609;stroke-linejoin:round;paint-order:markers fill stroke;fill-opacity:1;stroke:none;stroke-opacity:1"
-       id="rect1-5"
-       width="16.933332"
-       height="135.46666"
-       x="59.266666"
-       y="-135.46666"
-       transform="rotate(90)" />
+    <path
+       style="font-variation-settings:'wght' 700;fill:#ff0c0c;stroke-width:20;stroke-linejoin:round;paint-order:markers fill stroke;stroke-dasharray:none;stroke:#000000;stroke-opacity:1"
+       d="M 0,67.73333 H 135.46666"
+       id="path1" />
+    <path
+       style="font-variation-settings:'wght' 700;fill:#ff0c0c;stroke-width:20;stroke-linejoin:round;paint-order:markers fill stroke;stroke:#000000;stroke-opacity:1;stroke-dasharray:none"
+       d="M 67.73333,135.46666 V 3.5603841e-6"
+       id="path2" />
   </g>
 </svg>

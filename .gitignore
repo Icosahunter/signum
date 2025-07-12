@@ -1,2 +1,5 @@
 output
 dist
+.venv
+.ropeproject
+*.egg-info

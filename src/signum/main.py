@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from copy import deepcopy
-from itertools import chain
 import subprocess
 import shlex
 import re
@@ -30,7 +29,7 @@ class Icon:
                 n.attrib['style'] = n.attrib['style'].replace('stroke:'+k, 'stroke:'+v)
                 n.attrib['style'] = n.attrib['style'].replace('fill:'+k, 'fill:'+v)
 
-    def insert(self, id, icon):
+    def insert(self, id, icon, scale_stroke_width=False):
 
         elem = self.tree.findall(f".//*[@id='__{id}__']")
 
@@ -50,7 +49,10 @@ class Icon:
                 x3 = x + (w/2) - (w3/2)
                 y3 = y + (h/2) - (h3/2)
 
-                insert_node = deepcopy(icon.content)
+                if not scale_stroke_width:
+                    icon.scale_stroke_width(1/scale)
+
+                insert_node = icon.content
                 if 'transform' in insert_node.attrib:
                     insert_node.attrib['transform'] += f' translate({x3} {y3}) scale({scale})'
                 else:
@@ -67,6 +69,10 @@ class Icon:
             self.content.attrib['transform'] += f' rotate({deg} {x} {y})'
         else:
             self.content.attrib['transform'] = f' rotate({deg} {x} {y})'
+
+    def scale_stroke_width(self, scale):
+        for n in self.tree.findall('.//*[@style]'):
+            n.attrib['style'] = re.sub(r'stroke-width:(\d*\.?\d+);', lambda x : f'stroke-width:{scale*float(x.group(1))};', n.attrib['style'])
 
     @staticmethod
     def _fit_size(size, desired_size):
@@ -99,23 +105,25 @@ class Environment:
         self.palettes = {}
         self.icon_defs = {}
         self.icons = {}
+        self.scale_stroke_width = True
         if file:
             self.load(file)
 
     def load(self, file):
         parser = ConfigParser()
         parser.read(file)
-        self.load_config(parser['__config__'])
+        self.load_config(parser)
         self.load_source_files()
         self.load_palettes(parser['__palettes__'])
         self.load_icon_defs({x:parser[x] for x in parser.sections() if x not in ['__config__', '__palettes__']})
 
-    def load_config(self, config):
-        self.source = Path(config.get('source', './'))
-        self.output = config.get('output', './dist/{section}/{size}/{name}{format}')
-        self.output_sizes = [int(x) for x in config.get('output_sizes', '512').split()]
-        self.output_formats = config.get('output_formats', ['.png'])
-        self.output_command = config.get('output_command', 'inkscape --export-width={size} --export-filename={dest} --export-area-drawing {src}')
+    def load_config(self, parser):
+        self.source = Path(parser.get('__config__', 'source', fallback='./'))
+        self.output = parser.get('__config__', 'output', fallback='./dist/{section}/{size}/{name}{format}')
+        self.output_sizes = [int(x) for x in parser.get('__config__', 'output_sizes', fallback='512').split()]
+        self.output_formats = parser.get('__config__', 'output_formats', fallback='.png').split()
+        self.output_command = parser.get('__config__', 'output_command', fallback='inkscape --export-width={size} --export-filename={dest} --export-area-drawing {src}')
+        self.scale_stroke_width = parser.getboolean('__config__', 'scale_stroke_width', fallback=True)
 
     def load_source_files(self):
         for file in self.source.glob('**/*.svg'):
@@ -140,7 +148,7 @@ class Environment:
         #    base = Icon(icon_file, icon_def.section)
         for inst in icon_def.inst:
             if inst[0] == 'insert':
-                base.insert(inst[1], self.icons[inst[2]])
+                base.insert(inst[1], deepcopy(self.icons[inst[2]]), self.scale_stroke_width)
             elif inst[0] == 'rotate':
                 base.rotate(inst[1])
             elif inst[0] == 'color':
@@ -164,22 +172,27 @@ class Environment:
                 for format in self.output_formats:
                     if format == '.svg':
                         src = (temp_dir_path / name).with_suffix('.svg')
-                        dest = self.output.format(section=icon.section, size='scalable', name=name, format=format)
-                        shutil.copy(src, dest)
-                    for size in self.output_sizes:
-                        src = (temp_dir_path / name).with_suffix('.svg')
-                        dest = Path(self.output.format(section=icon.section, size=size, name=name, format=format))
+                        dest = Path(self.output.format(section=icon.section, size='scalable', name=name, format=format))
                         dest.parent.mkdir(exist_ok=True, parents=True)
-                        cmd = self.output_command.format(size=size, src=src, dest=dest, format=format)
-                        subprocess.run(shlex.split(cmd))
+                        shutil.copy(src, dest)
+                    else:
+                        for size in self.output_sizes:
+                            src = (temp_dir_path / name).with_suffix('.svg')
+                            dest = Path(self.output.format(section=icon.section, size=size, name=name, format=format))
+                            dest.parent.mkdir(exist_ok=True, parents=True)
+                            cmd = self.output_command.format(size=size, src=src, dest=dest, format=format)
+                            subprocess.run(shlex.split(cmd))
 
     def run(self):
         self.build_icons()
         self.output_icons()
 
-if __name__ == '__main__':
+def run():
     if len(sys.argv) > 1:
         env = Environment(sys.argv[1])
     else:
         env = Environment('icons.txt')
     env.run()
+
+if __name__ == '__main__':
+    run()
