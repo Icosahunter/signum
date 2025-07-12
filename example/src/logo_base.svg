@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 135.46667 135.46667"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   sodipodi:docname="logo_base.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#888888"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.0393815"
+     inkscape:cx="208.77801"
+     inkscape:cy="316.05335"
+     inkscape:window-width="1920"
+     inkscape:window-height="1012"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <circle
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:7.4964;stroke-linejoin:round;stroke-dasharray:14.9928, 7.4964;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
+       id="path3"
+       cx="67.73333"
+       cy="67.73333"
+       r="67.73333" />
+    <g
+       id="g1"
+       transform="translate(-3.6950404,-1.4454973)">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.463486;stroke-width:1.70305;stroke-linejoin:round;paint-order:markers fill stroke"
+         id="square"
+         width="57.018501"
+         height="57.018394"
+         x="-113.37321"
+         y="52.564663"
+         transform="scale(-1,1)" />
+      <rect
+         style="fill:#ff0000;fill-opacity:0.463486;stroke-width:1.92704;stroke-linejoin:round;paint-order:markers fill stroke"
+         id="circle"
+         width="64.517586"
+         height="64.517593"
+         x="-88.613571"
+         y="20.30793"
+         transform="scale(-1,1)" />
+      <rect
+         style="fill:#ff0000;fill-opacity:0.463486;stroke-width:1.85077;stroke-linejoin:round;paint-order:markers fill stroke"
+         id="triangle"
+         width="61.964191"
+         height="61.964081"
+         x="-84.039398"
+         y="36.751289"
+         transform="scale(-1,1)" />
+    </g>
+  </g>
+</svg>

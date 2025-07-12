@@ -3,10 +3,15 @@ source = ./src
 output = ./dist/{section}/{size}/{name}{format}
 output_sizes = 48 64 128
 output_formats = .png .svg
-scale_stroke_width = false
 
 [__palettes__]
 red = #000000 #ff0000
+blue = #000000 #0000ff
+yellow = #000000 #fff000
 
 [test_section]
-test = drawing1 insert(symbol drawing2) color(red) rotate(45)
+blue_square = square color(blue)
+yellow_triangle = triangle color(yellow)
+red_circle = circle color(red)
+logo = logo_base insert(square blue_square) insert(circle red_circle) insert(triangle yellow_triangle) mirror()
+weird_logo = logo_base insert(square logo) insert(circle logo) insert(triangle logo)

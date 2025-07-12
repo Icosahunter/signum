@@ -13,6 +13,7 @@ import shutil
 class Icon:
     def __init__(self, src_filepath, section=None):
         self.src = src_filepath
+        ET.register_namespace('', 'http://www.w3.org/2000/svg')
         self.tree = ET.parse(self.src)
         self.root = self.tree.getroot()
         self.content = self.tree.findall('./{*}g')[0]
@@ -29,20 +30,21 @@ class Icon:
                 n.attrib['style'] = n.attrib['style'].replace('stroke:'+k, 'stroke:'+v)
                 n.attrib['style'] = n.attrib['style'].replace('fill:'+k, 'fill:'+v)
 
-    def insert(self, id, icon, scale_stroke_width=False):
+    def insert(self, id, icon=None, scale_stroke_width=False):
 
-        elem = self.tree.findall(f".//*[@id='__{id}__']")
+        elem = self.tree.findall(f".//*[@id='{id}']")
 
         if len(elem):
 
             elem = elem[0]
-            elem_parent = self.tree.findall(f".//*[@id='__{id}__']..")[0]
+            elem_parent = self.tree.findall(f".//*[@id='{id}']..")[0]
 
             if icon:
                 x = float(elem.attrib['x'])
                 y = float(elem.attrib['y'])
                 w = float(elem.attrib['width'])
                 h = float(elem.attrib['height'])
+                tx = elem.attrib.get('transform', '')
 
                 w3, h3 = Icon._fit_size(icon.size, (w, h))
                 scale = (w3/icon.size[0])
@@ -52,23 +54,28 @@ class Icon:
                 if not scale_stroke_width:
                     icon.scale_stroke_width(1/scale)
 
-                insert_node = icon.content
-                if 'transform' in insert_node.attrib:
-                    insert_node.attrib['transform'] += f' translate({x3} {y3}) scale({scale})'
-                else:
-                    insert_node.attrib['transform'] = f' translate({x3} {y3}) scale({scale})'
+                insert_group = ET.Element('g')
+                insert_group.attrib['transform'] = tx + f' translate({x3} {y3}) scale({scale})'
 
-                elem_parent.append(insert_node)
+                insert_node = icon.content
+
+                insert_group.append(insert_node)
+
+                elem_parent.append(insert_group)
 
             elem_parent.remove(elem)
+
+    def mirror(self, dir='v'):
+
+        if dir == 'v':
+            self.content.attrib['transform'] = self.content.attrib.get('transform', '') + f' scale(-1, 1) translate({-self.size[0]}, 0)'
+        elif dir == 'h':
+            self.content.attrib['transform'] = self.content.attrib.get('transform', '') + f' scale(1, -1) translate(0, {-self.size[1]})'
 
     def rotate(self, deg):
         x = self.size[0] / 2
         y = self.size[1] / 2
-        if 'transform' in self.content.attrib:
-            self.content.attrib['transform'] += f' rotate({deg} {x} {y})'
-        else:
-            self.content.attrib['transform'] = f' rotate({deg} {x} {y})'
+        self.content.attrib['transform'] = self.content.attrib.get('transform', '') + f' rotate({deg} {x} {y})'
 
     def scale_stroke_width(self, scale):
         for n in self.tree.findall('.//*[@style]'):
@@ -94,8 +101,12 @@ class IconDef:
         self.base = icon_def[0]
         self.inst = []
         for x in icon_def[1:]:
-            inst, args = x.split('(')
-            args = args[0:-1].split()
+            if '(' in x:
+                inst, args = x.split('(')
+                args = args[0:-1].split()
+            else:
+                inst = x
+                args = []
             self.inst.append([inst, *args])
         self.deps = set([x[2] for x in self.inst if x[0] == 'insert'])
         self.deps.add(self.base)
@@ -150,9 +161,11 @@ class Environment:
             if inst[0] == 'insert':
                 base.insert(inst[1], deepcopy(self.icons[inst[2]]), self.scale_stroke_width)
             elif inst[0] == 'rotate':
-                base.rotate(inst[1])
+                base.rotate(inst[1] if len(inst) > 1 else '90')
             elif inst[0] == 'color':
                 base.color(self.palettes[inst[1]])
+            elif inst[0] == 'mirror':
+                base.mirror(inst[1] if len(inst) > 1 else 'v')
         return base
 
     def build_icons(self):
