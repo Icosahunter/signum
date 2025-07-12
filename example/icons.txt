@@ -10,8 +10,7 @@ blue = #000000 #0000ff
 yellow = #000000 #fff000
 
 [test_section]
-blue_square = square color(blue)
+blue_square = diamond rotate(45) color(blue)
 yellow_triangle = triangle color(yellow)
 red_circle = circle color(red)
 logo = logo_base insert(square blue_square) insert(circle red_circle) insert(triangle yellow_triangle) mirror()
-weird_logo = logo_base insert(square logo) insert(circle logo) insert(triangle logo)
