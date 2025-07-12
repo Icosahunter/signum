@@ -8,15 +8,30 @@ In the future support for more formats may be added.
 > [!NOTE]
 > Signum is still in development and not ready for production use. Some features may be broken and syntax may change in the future.
 
-## Using Signum
+## Basic Usage
 
-To try out Signum:
+If you have Signum installed, you can use it by running the command `signum [file_name]`,
+where `[file_name]` is an optional argument specifying the path to your icon definition file.
+
+You can also try Signum without installing like so:
+
  - Make sure you have Python 3 and Inkscape installed
  - Clone this repository
  - Navigate to the cloned repo in your terminal
- - Do `python3 src/main.py [filename]` where `[filename]` is the name of your icon definition file (if blank, `icons.txt` is used)
+ - Do `python3 src/signum/main.py [filename]` where `[filename]` is the name of your icon definition file (if blank, `icons.txt` is used)
 
-## Icon Def Files
+## Installation
+
+ - Make sure you have Python 3 and Inkscape installed
+ - Clone this repository
+ - Navigate to the cloned repo in your terminal
+ - If you hav Just installed you can simply run `just install` in the terminal
+ - If you do not have Just, do the following:
+  - Install dependencies: `python3 -m pip install -r requirements.txt`
+  - Build package: `python3 -m build`
+  - Install: `python3 -m pip install ./dist/*.whl`
+
+## Icon Definition File Structure
 
 You tell Signum how to make your icons using an icon definition file.
 This file is an INI style config file.
@@ -55,7 +70,7 @@ blue = #333 #003 #777 #007 #bbb #00b #fff #00f
 
 This defines 3 palettes named 'red', 'green', and 'blue', which turn various shades of gray into various shades of red, green, and blue respectively.
 
-### Icon definitions
+### Icon Definitions
 
 Any other sections are for icon definitions. Each icon definition has a name and a base icon, and then optionally some "instructions".
 The format is like so:
