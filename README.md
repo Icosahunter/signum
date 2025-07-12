@@ -1,4 +1,7 @@
-# Signum
+<div align="center">
+    <img src="logo.svg" width="150">
+    <h1> Signum </h1>
+</div>
 
 Signum is a simple but powerful icon generation tool.
 
