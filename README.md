@@ -3,7 +3,7 @@
     <h1> Signum </h1>
 </div>
 
-Signum is a simple but powerful icon generation tool.
+Signum is a simple but powerful icon generator engine.
 
 Currently Signum is only setup to work with SVG files (though you can export to any export format Inkscape supports).
 In the future support for more formats may be added.
