@@ -13,8 +13,8 @@ import shutil
 class Icon:
     def __init__(self, src_filepath, section=None):
         self.src = src_filepath
-        ET.register_namespace('', 'http://www.w3.org/2000/svg')
         self.tree = ET.parse(self.src)
+        ET.register_namespace('', 'http://www.w3.org/2000/svg')
         self.root = self.tree.getroot()
         self.content = self.tree.findall('./{*}g')[0]
         viewbox = self.root.attrib['viewBox'].split()
@@ -30,14 +30,19 @@ class Icon:
                 n.attrib['style'] = n.attrib['style'].replace('stroke:'+k, 'stroke:'+v)
                 n.attrib['style'] = n.attrib['style'].replace('fill:'+k, 'fill:'+v)
 
+    def clean_inserts(self):
+        inserts = re.findall(r'id="([a-zA-Z0-9:_\.\-]+)\.INS"', str(ET.tostring(self.root)))
+        for insert in inserts:
+            self.insert(insert)
+
     def insert(self, id, icon=None, scale_stroke_width=False):
 
-        elem = self.tree.findall(f".//*[@id='{id}']")
+        elem = self.tree.findall(f".//*[@id='{id}.INS']")
 
         if len(elem):
 
             elem = elem[0]
-            elem_parent = self.tree.findall(f".//*[@id='{id}']..")[0]
+            elem_parent = self.tree.findall(f".//*[@id='{id}.INS']..")[0]
 
             if icon:
                 x = float(elem.attrib['x'])
@@ -117,6 +122,7 @@ class Environment:
         self.icon_defs = {}
         self.icons = {}
         self.scale_stroke_width = True
+        self.clean_inserts = False
         if file:
             self.load(file)
 
@@ -135,6 +141,7 @@ class Environment:
         self.output_formats = parser.get('__config__', 'output_formats', fallback='.png').split()
         self.output_command = parser.get('__config__', 'output_command', fallback='inkscape --export-width={size} --export-filename={dest} --export-area-drawing {src}')
         self.scale_stroke_width = parser.getboolean('__config__', 'scale_stroke_width', fallback=True)
+        self.clean_inserts = parser.getboolean('__config__', 'clean_inserts', fallback=False)
 
     def load_source_files(self):
         for file in self.source.glob('**/*.svg'):
@@ -167,6 +174,8 @@ class Environment:
                 base.color(self.palettes[inst[1]])
             elif inst[0] == 'mirror':
                 base.mirror(inst[1] if len(inst) > 1 else 'v')
+            elif inst[0] == 'clean':
+                base.clean_inserts()
         return base
 
     def build_icons(self):
@@ -182,6 +191,8 @@ class Environment:
 
         for name, icon in self.icons.items():
             if icon.section != '__temporary__' and icon.section != None:
+                if self.clean_inserts:
+                    icon.clean_inserts()
                 icon.write((temp_dir_path / name).with_suffix('.svg'))
                 for format in self.output_formats:
                     if format == '.svg':

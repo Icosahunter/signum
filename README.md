@@ -88,13 +88,14 @@ Instructions are performed sequntially from left to right.
 Supported instructions are as follows:
 
 - `color(palette_name)`: Applies the palette *palette_name* to the icon.
-- `insert(id, icon_name)`: Inserts the icon *icon_name* into the rectangle with the ID *id*.
-- `rotate(degrees)`: Rotates the icon by *degrees*. If no degrees is omitted, defaults to 90.
+- `insert(id, icon_name)`: Inserts the icon *icon_name* into the rectangle with the ID "*id*.INS".
+- `rotate(degrees)`: Rotates the icon by *degrees*. If no degrees is omitted, defaults to `90`.
 - `mirror(direction)`: Mirrors the icon along an axis. *direction* should be either `v` for vertical or `h` for horizontal, if omitted, defaults to `v`.
+- `clean()`: Removes any remaining insert rectangles.
 
 The mirror instruction is experimental and has some issues currently.
 
-In Inkscape you can set the ID of a shape in the Object Properties tab, in the Properties section.
+In Inkscape you can set the ID of a shape in the Object Properties tab, in the Properties section. The IDs for the insert rectangles must be suffixed with ".INS", which must be uppercase as shown.
 
 Here is an example to clarify:
 
