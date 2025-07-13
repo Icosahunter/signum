@@ -108,7 +108,7 @@ class IconDef:
                 inst = x
                 args = []
             self.inst.append([inst, *args])
-        self.deps = set([x[2] for x in self.inst if x[0] == 'insert'])
+        self.deps = set([x[2] for x in self.inst if x[0] == 'insert' and len(x) > 2])
         self.deps.add(self.base)
 
 class Environment:
@@ -159,7 +159,8 @@ class Environment:
         #    base = Icon(icon_file, icon_def.section)
         for inst in icon_def.inst:
             if inst[0] == 'insert':
-                base.insert(inst[1], deepcopy(self.icons[inst[2]]), self.scale_stroke_width)
+                icon_to_insert = deepcopy(self.icons[inst[2]]) if len(inst) > 2 else None
+                base.insert(inst[1], icon_to_insert, self.scale_stroke_width)
             elif inst[0] == 'rotate':
                 base.rotate(inst[1] if len(inst) > 1 else '90')
             elif inst[0] == 'color':

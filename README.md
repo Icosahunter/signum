@@ -75,7 +75,8 @@ This defines 3 palettes named 'red', 'green', and 'blue', which turn various sha
 
 ### Icon Definitions
 
-Any other sections are for icon definitions. Each icon definition has a name and a base icon, and then optionally some "instructions".
+Any other sections are for icon definitions. The special section `__temporary__` can be used for icons that you just need as parts of other icons, and you don't want exported at the end.
+Each icon definition has a name and a base icon, and then optionally some "instructions".
 The format is like so:
 
 `icon_name = base_icon instruction_1 instruction_2 ...`
