@@ -13,8 +13,7 @@ In the future support for more formats may be added.
 
 ## Basic Usage
 
-If you have Signum installed, you can use it by running the command `signum [file_name]`,
-where `[file_name]` is an optional argument specifying the path to your icon definition file.
+If you have Signum installed, you can use it by running the command `signum [file_name]`, where `[file_name]` is an optional argument specifying the path to your icon definition file.
 
 You can also try Signum without installing like so:
 
@@ -45,7 +44,7 @@ The `__config__` section can have the following options:
 - `source` : Directory path containing all your source SVG files.
 - `output` : Directory path to output the built icons to. Should be a Python format string, which can use the values: `section`, `size`, `name`, `format`.
 - `output_sizes` : Space separated list of numbers. These are the different widths to export the images at.
-- `output_formats` : Space separated of file extensions for output files, must include the `.` (Example: `.png`)
+- `output_formats` : Space separated list of file extensions for output files, must include the `.` (Example: `.png`)
 - `output_command` : Shell command for outputting the files. By default Signum uses inkscape for exporting. The command should be a Python format string which can make use of the following values: `size`, `src`, `dest`, `format`.
 - `scale_stroke_width` : If `true`, scale the stroke width when inserting icons.
 
@@ -89,7 +88,7 @@ Supported instructions are as follows:
 
 - `color(palette_name)`: Applies the palette *palette_name* to the icon.
 - `insert(id, icon_name)`: Inserts the icon *icon_name* into the rectangle with the ID "*id*.INS".
-- `rotate(degrees)`: Rotates the icon by *degrees*. If no degrees is omitted, defaults to `90`.
+- `rotate(degrees)`: Rotates the icon by *degrees*. If *degrees* is omitted, defaults to `90`.
 - `mirror(direction)`: Mirrors the icon along an axis. *direction* should be either `v` for vertical or `h` for horizontal, if omitted, defaults to `v`.
 - `clean()`: Removes any remaining insert rectangles.
 
@@ -111,5 +110,5 @@ The `blue_diamond` is based on an icon named `square` which could be a file name
 This `square` icon is rotated 45 degrees and then recolored using a palette named `blue`.
 
 The `diamond_button` is based on an icon named `button` which could be a file named `button.svg` somewhere in the source folder.
-This `button` icon must have a rectangle inside it with the ID `__symbol__` for the insert operation to work.
-The `blue_diamond` icon is inserted into the base `button` icon and scaled to fit inside the rectangle with ID `__symbol__`.
+This `button` icon must have a rectangle inside it with the ID `symbol.INS` for the insert operation to work.
+The `blue_diamond` icon is inserted into the base `button` icon and scaled to fit inside the rectangle with ID `symbol.INS`.
