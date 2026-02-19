@@ -16,7 +16,12 @@ class Icon:
         self.tree = ET.parse(self.src)
         ET.register_namespace('', 'http://www.w3.org/2000/svg')
         self.root = self.tree.getroot()
-        self.content = self.tree.findall('./{*}g')[0]
+        content = self.tree.findall('./{*}g')[0]
+        group = ET.Element('g')
+        self.root.remove(content)
+        group.append(content)
+        self.root.append(group)
+        self.content = group
         viewbox = self.root.attrib['viewBox'].split()
         self.size = float(viewbox[2]), float(viewbox[3])
         self.section = section
@@ -26,9 +31,12 @@ class Icon:
 
     def color(self, palette):
         for n in self.tree.findall('.//*[@style]'):
-            for k, v in palette.items():
-                n.attrib['style'] = n.attrib['style'].replace('stroke:'+k, 'stroke:'+v)
-                n.attrib['style'] = n.attrib['style'].replace('fill:'+k, 'fill:'+v)
+            res = re.search('stroke:#[\\dabcdef]*', n.attrib['style'])
+            if res and res.group(0)[7:] in palette.keys():
+                n.attrib['style'] = n.attrib['style'].replace(res.group(0), 'stroke:'+palette[res.group(0)[7:]])
+            res = re.search('fill:#[\\dabcdef]*', n.attrib['style'])
+            if res and res.group(0)[5:] in palette.keys():
+                n.attrib['style'] = n.attrib['style'].replace(res.group(0), 'fill:'+palette[res.group(0)[5:]])
 
     def clean_inserts(self):
         inserts = re.findall(r'id="([a-zA-Z0-9:_\.\-]+)\.INS"', str(ET.tostring(self.root)))
@@ -173,9 +181,12 @@ class Environment:
             elif inst[0] == 'color':
                 base.color(self.palettes[inst[1]])
             elif inst[0] == 'mirror':
+                print('WARNING: The mirror instruction is experimental and may not work properly in some circumstances.')
                 base.mirror(inst[1] if len(inst) > 1 else 'v')
             elif inst[0] == 'clean':
                 base.clean_inserts()
+            else:
+                raise Exception(f'Undefined instruction "{inst}"')
         return base
 
     def build_icons(self):
@@ -183,7 +194,10 @@ class Environment:
         sorted_icons = toposort_flatten(deps_list)
         sorted_icons = [x for x in sorted_icons if x not in self.icons]
         for icon in sorted_icons:
-            self.icons[icon] = self.build_icon(self.icon_defs[icon])
+            if icon in self.icon_defs:
+                self.icons[icon] = self.build_icon(self.icon_defs[icon])
+            else:
+                raise Exception(f'Undefined icon "{icon}"')
 
     def output_icons(self):
         temp_dir = TemporaryDirectory()
