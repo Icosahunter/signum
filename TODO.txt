@@ -1,0 +1,2 @@
+[ ] Add scale argument to insert instruction
+[ ] Add position argument to insert instruction
